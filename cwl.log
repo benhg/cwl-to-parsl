@@ -9,8 +9,11 @@ import scipy
 
 workers = ThreadPoolExecutor(max_threads=4)
 dfk = DataFlowKernel(workers)
+"""Created from a Common Workflow Language Workflow
+Using CWL version: cwl:draft-3"""
 
 
+inp = File
+ex = string
 @App("bash", dfk)
 def test_app(input1, input2):
-    return input1
