@@ -50,7 +50,7 @@ class ParslTranslator:
         self.level = self.level - 1
 
     def declare_variable(self, name, value=""):
-        self.write("{} = {}".format(name, value))
+        self.write("{} = '{}'".format(name, value))
 
     def add_creation_msg(self):
         self.write('''"""Created from a Common Workflow Language {}
@@ -61,10 +61,15 @@ Using CWL version: {}"""'''.format(
         for item in self.workflow['inputs']:
             gen.declare_variable(item['id'], value=item['type'])
 
+    def set_global_outputs(self):
+        for item in self.workflow['outputs']:
+            gen.declare_variable(item['id'], value=item['type'])
+
 
 if __name__ == '__main__':
     gen = ParslTranslator("testflow.cwl")
     gen.set_environment(imports=['numpy as np', 'scipy'])
     gen.set_global_inputs()
+    gen.set_global_outputs()
     gen.start_parsl_app("test_app", ["input1", "input2"])
     print(gen.end())

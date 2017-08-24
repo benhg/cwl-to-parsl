@@ -13,7 +13,8 @@ dfk = DataFlowKernel(workers)
 Using CWL version: cwl:draft-3"""
 
 
-inp = File
-ex = string
+inp = 'File'
+ex = 'string'
+classout = 'File'
 @App("bash", dfk)
 def test_app(input1, input2):
