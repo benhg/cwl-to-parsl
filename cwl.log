@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+
+import parsl
+from parsl import *
+import numpy as np
+import scipy
+
+
+workers = ThreadPoolExecutor(max_threads=4)
+dfk = DataFlowKernel(workers)
+
+
+@App("bash", dfk)
+def test_app(input1, input2):
+    return input1
