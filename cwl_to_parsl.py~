@@ -8,7 +8,6 @@ class ParslTranslator:
     def __init__(self, file, tab="    "):
         self.level = 0
         self.code = []
-        self.inputs = {}
         self.tab = tab
         self.level = 0
         self.workflow = self.load_workflow(file)
@@ -32,7 +31,7 @@ class ParslTranslator:
 
     def set_environment(self, dfkname='dfk', workersname='workers', executor='ThreadPoolExecutor', executor_options=['max_threads=4'], imports=[]):
         self.code.extend(
-            ["#!/usr/bin/env python3\n", "import parsl", "from parsl import *"])
+            ["#!/usr/bin/env python3", "\n", "import parsl", "from parsl import *"])
         self.code.extend(["import " + i for i in imports])
         self.code.append("\n")
         self.code.append("{} = {}({})".format(
@@ -60,44 +59,17 @@ Using CWL version: {}"""'''.format(
 
     def set_global_inputs(self):
         for item in self.workflow['inputs']:
-            self.declare_variable(item['id'], value=item['type'])
-            self.inputs[item['id']] = item['type']
+            gen.declare_variable(item['id'], value=item['type'])
 
     def set_global_outputs(self):
         for item in self.workflow['outputs']:
-            self.declare_variable(item['id'], value=item['type'])
-
-    def create_app_from_exec_step(self, step):
-        self.start_parsl_app(step['id'], [i['id'] for i in step['inputs']])
-        base_cmd = "cmd_line = '{} ".format(step['run'])
-        inputs = ['{{{}}}'.format(j['id']) for j in step['inputs']]
-        self.write(base_cmd + " ".join(inputs) + "'\n")
-        self.dedent()
-
-    def create_all_apps(self):
-        for i in self.workflow['steps']:
-            self.create_app_from_exec_step(i)
-
-    def call_step_1(self):
-        func = self.workflow['steps'][0]['id']
-        call = "{}({})".format(func, ", ".join(
-            ["{}='{}'".format(i, self.inputs[i]) for i in self.inputs.keys()]))
-        self.write(call)
-
-    def translate_workflow(self, imports=[]):
-        gen.set_environment(imports=imports)
-        gen.set_global_inputs()
-        gen.set_global_outputs()
-        gen.create_all_apps()
-        gen.call_step_1()
-
-    def dump_parsl_to_file(self, file):
-        with open(file, 'w') as fh:
-            fh.write(self.end())
+            gen.declare_variable(item['id'], value=item['type'])
 
 
 if __name__ == '__main__':
     gen = ParslTranslator("testflow.cwl")
-    gen.translate_workflow(
-        ["scipy", "numpy as np", "matplotlib.pyplot as plt"])
-    gen.dump_parsl_to_file("cwl.log")
+    gen.set_environment(imports=['numpy as np', 'scipy'])
+    gen.set_global_inputs()
+    gen.set_global_outputs()
+    gen.start_parsl_app("test_app", ["input1", "input2"])
+    print(gen.end())
