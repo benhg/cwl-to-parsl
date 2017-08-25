@@ -5,7 +5,7 @@ from parsl import *
 import scipy
 import numpy as np
 import matplotlib.pyplot as plt
-"""Created from a Common Workflow Language Workflow
+"""Created automatically from a Common Workflow Language Workflow
 Using CWL version: cwl:draft-3"""
 
 
