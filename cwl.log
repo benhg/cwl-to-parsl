@@ -32,4 +32,4 @@ def untar(tarfile, extractfile):
 def compile(src):
     cmd_line = 'arguments.cwl {src}'
 
-untar(inp='File', ex='string')
+untar('File', 'string')
