@@ -28,4 +28,4 @@ steps:
       - id: src
         source: "#untar/example_out"
     outputs:
-      - id: classfile
+      - id: classfile  

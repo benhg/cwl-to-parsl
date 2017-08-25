@@ -34,12 +34,12 @@ class ParslTranslator:
         self.code.extend(
             ["#!/usr/bin/env python3\n", "import parsl", "from parsl import *"])
         self.code.extend(["import " + i for i in imports])
+        self.add_creation_msg()
         self.code.append("\n")
         self.code.append("{} = {}({})".format(
             workersname, executor, ", ".join([opt for opt in executor_options])))
         self.code.append(
             "{} = DataFlowKernel({})".format(dfkname, workersname))
-        self.add_creation_msg()
         self.code.append("\n")
 
     def indent(self):
@@ -59,13 +59,17 @@ Using CWL version: {}"""'''.format(
             self.workflow['class'], self.workflow['cwlVersion']))
 
     def set_global_inputs(self):
+        self.write("#GLOBAL INPUTS")
         for item in self.workflow['inputs']:
             self.declare_variable(item['id'], value=item['type'])
             self.inputs[item['id']] = item['type']
+        self.write("#END OF GLOBAL INPUTS\n")
 
     def set_global_outputs(self):
+        self.write("#GLOBAL OUTPUTS")
         for item in self.workflow['outputs']:
             self.declare_variable(item['id'], value=item['type'])
+        self.write("#END OF GLOBAL OUTPUTS\n")
 
     def create_app_from_exec_step(self, step):
         self.start_parsl_app(step['id'], [i['id'] for i in step['inputs']])
@@ -76,6 +80,7 @@ Using CWL version: {}"""'''.format(
 
     def create_all_apps(self):
         for i in self.workflow['steps']:
+            self.write("# BEGIN STEP")
             self.create_app_from_exec_step(i)
 
     def call_step_1(self):
