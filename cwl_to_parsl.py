@@ -54,7 +54,7 @@ class ParslTranslator:
         self.write("{} = '{}'".format(name, value))
 
     def add_creation_msg(self):
-        self.write('''"""Created from a Common Workflow Language {}
+        self.write('''"""Created automatically from a Common Workflow Language {}
 Using CWL version: {}"""'''.format(
             self.workflow['class'], self.workflow['cwlVersion']))
 
