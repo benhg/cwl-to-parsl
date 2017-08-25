@@ -101,7 +101,7 @@ Using CWL version: {}"""'''.format(
         """Automatically call first function with global inputs as input values. this expects the first task to call the rest of the tasks."""
         func = self.workflow['steps'][0]['id']
         call = "{}({})".format(func, ", ".join(
-            ["{}='{}'".format(i, self.inputs[i]) for i in self.inputs.keys()]))
+            ["'{}'".format(self.inputs[i]) for i in self.inputs.keys()]))
         self.write(call)
 
     def translate_workflow(self, imports=[]):
