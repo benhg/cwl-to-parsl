@@ -1,4 +1,4 @@
-import sys
+import argparse
 import string
 import yaml
 
@@ -35,8 +35,11 @@ class ParslTranslator:
             name, ", ".join([val for val in inputs])))
         self.indent()
 
-    def set_environment(self, dfkname='dfk', workersname='workers', executor='ThreadPoolExecutor', executor_options=['max_threads=4'], imports=[]):
-        """Set necessary file header details, such as "import parsl" and setting up a dfk"""
+    def set_environment(self, dfkname='dfk', workersname='workers',
+                        executor='ThreadPoolExecutor',
+                        executor_options=['max_threads=4'], imports=[]):
+        """Set necessary file header details, such as
+        "import parsl" and setting up a dfk"""
         self.code.extend(
             ["#!/usr/bin/env python3\n", "import parsl", "from parsl import *"])
         self.code.extend(["import " + i for i in imports])
@@ -98,7 +101,8 @@ Using CWL version: {}"""'''.format(
             self.create_app_from_exec_step(i)
 
     def call_step_1(self):
-        """Automatically call first function with global inputs as input values. this expects the first task to call the rest of the tasks."""
+        """Automatically call first function with global inputs as input values.
+        This expects the first task to call the rest of the tasks."""
         func = self.workflow['steps'][0]['id']
         call = "{}({})".format(func, ", ".join(
             ["'{}'".format(self.inputs[i]) for i in self.inputs.keys()]))
@@ -119,7 +123,14 @@ Using CWL version: {}"""'''.format(
 
 
 if __name__ == '__main__':
-    gen = ParslTranslator("testflow.cwl")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-in", action="store",
+                        dest="input_file", default='testflow.cwl')
+    parser.add_argument("-out", action="store",
+                        dest="output_file", default='cwl.log')
+    args = parser.parse_args()
+
+    gen = ParslTranslator(args.input_file)
     gen.translate_workflow(
         ["scipy", "numpy as np", "matplotlib.pyplot as plt"])
-    gen.dump_parsl_to_file("cwl.log")
+    gen.dump_parsl_to_file(args.output_file)
