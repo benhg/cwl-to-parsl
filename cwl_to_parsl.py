@@ -65,45 +65,59 @@ class ParslTranslator:
         """Declare a variable with name and value"""
         self.write("{} = '{}'".format(name, value))
 
+    def add_doc_comments(self):
+        """Add docs if present in CWL flow"""
+        self.write("'''{}'''".format(self.workflow.get('doc'), ""))
+
     def add_creation_msg(self):
         """Add note to code stating what created the workflow"""
         self.write('''"""Created automatically from a Common Workflow Language {}
 Using CWL version: {}"""'''.format(
-            self.workflow['class'], self.workflow['cwlVersion']))
+            self.workflow.get('class', ""), self.workflow.get('cwlVersion', "")))
 
     def set_global_inputs(self):
         """Declare CWL global input as python variable"""
         self.write("#GLOBAL INPUTS")
-        for item in self.workflow['inputs']:
-            self.declare_variable(item['id'], value=item['type'])
-            self.inputs[item['id']] = item['type']
+        for item in self.workflow.get('inputs', ""):
+            tmp = item if type(item) == str else item['id']
+            val = item if type(item) == str else item['type']
+            self.declare_variable(tmp, value=val)
+            self.inputs[tmp] = val
         self.write("#END OF GLOBAL INPUTS\n")
 
     def set_global_outputs(self):
         """Declare CWL global output as python variable"""
         self.write("#GLOBAL OUTPUTS")
-        for item in self.workflow['outputs']:
-            self.declare_variable(item['id'], value=item['type'])
+        for item in self.workflow.get('outputs', ""):
+            tmp = item if type(item) == str else item['id']
+            val = item if type(item) == str else item['type']
+            self.declare_variable(tmp, value=val)
         self.write("#END OF GLOBAL OUTPUTS\n")
 
     def create_app_from_exec_step(self, step):
         """Convert execution step from CWL to Parsl bash app"""
-        self.start_parsl_app(step['id'], [i['id'] for i in step['inputs']])
+        tmp = step if type(step) == str else step['id']
+        if type(step) == str:
+            step = self.workflow['steps'][step]
+        self.start_parsl_app(
+            tmp, [i if type(i) == str else i['id'] for i in step.get('inputs', step.get('in', ""))])
         base_cmd = "cmd_line = '{} ".format(step['run'])
-        inputs = ['{{{}}}'.format(j['id']) for j in step['inputs']]
+        inputs = ['{{{}}}'.format(j if type(j) == str else j['id'])
+                  for j in step.get('inputs', step.get('in', []))]
         self.write(base_cmd + " ".join(inputs) + "'\n")
         self.dedent()
 
     def create_all_apps(self):
         """Create a parsl bash app for each step in execution steps"""
-        for i in self.workflow['steps']:
+        for i in self.workflow.get('steps', ""):
             self.write("# BEGIN STEP")
             self.create_app_from_exec_step(i)
 
     def call_step_1(self):
         """Automatically call first function with global inputs as input values.
         This expects the first task to call the rest of the tasks."""
-        func = self.workflow['steps'][0]['id']
+        var = next(iter(self.workflow['steps']))
+        func = var if type(var) == str else self.workflow['steps'][var]['id']
         call = "{}({})".format(func, ", ".join(
             ["'{}'".format(self.inputs[i]) for i in self.inputs.keys()]))
         self.write(call)
@@ -111,6 +125,7 @@ Using CWL version: {}"""'''.format(
     def translate_workflow(self, imports=[]):
         """Helper method to translate an entire workflow with one call"""
         self.set_environment(imports=imports)
+        self.add_doc_comments()
         self.set_global_inputs()
         self.set_global_outputs()
         self.create_all_apps()
